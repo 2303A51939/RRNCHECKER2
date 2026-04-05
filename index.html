@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RRN Checker — Payment Status Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #0a0f1e;
+    --paper: #f4f1eb;
+    --accent: #2563ff;
+    --accent2: #ff5733;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e1d8;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --radius: 16px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(244,241,235,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    text-decoration: none; color: var(--muted);
+    font-size: 14px; font-weight: 500;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-cta {
+    background: var(--ink); color: #fff !important;
+    padding: 10px 22px; border-radius: 100px;
+    font-size: 14px !important;
+  }
+  .nav-cta:hover { background: var(--accent) !important; color: #fff !important; }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-items: center; gap: 60px;
+    padding: 120px 48px 80px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 60% at 70% 50%, rgba(37,99,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(37,99,255,0.08); border: 1px solid rgba(37,99,255,0.2);
+    color: var(--accent); padding: 6px 14px; border-radius: 100px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .hero-badge::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(42px, 5vw, 68px);
+    font-weight: 800; line-height: 1.05;
+    letter-spacing: -2px;
+  }
+  h1 em { font-style: normal; color: var(--accent); }
+  h1 .strike {
+    position: relative; display: inline-block;
+  }
+  h1 .strike::after {
+    content: ''; position: absolute;
+    left: 0; top: 55%; right: 0; height: 3px;
+    background: var(--accent2); border-radius: 2px;
+  }
+
+  .hero-sub {
+    margin-top: 20px; font-size: 17px;
+    color: var(--muted); line-height: 1.7;
+    max-width: 480px;
+  }
+  .hero-actions {
+    margin-top: 40px; display: flex; gap: 14px; flex-wrap: wrap;
+  }
+  .btn-primary {
+    background: var(--accent); color: #fff;
+    padding: 14px 32px; border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600;
+    text-decoration: none; border: none; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 4px 20px rgba(37,99,255,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,99,255,0.4); }
+  .btn-outline {
+    background: transparent; color: var(--ink);
+    padding: 14px 32px; border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500;
+    text-decoration: none; border: 1.5px solid var(--border); cursor: pointer;
+    transition: border-color .2s, background .2s;
+  }
+  .btn-outline:hover { border-color: var(--ink); background: var(--ink); color: #fff; }
+
+  /* ── HERO RIGHT - DEMO CARD ── */
+  .hero-visual {
+    display: flex; flex-direction: column; gap: 16px;
+    animation: floatIn 0.8s ease forwards;
+  }
+  @keyframes floatIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .demo-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+  }
+  .demo-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 20px;
+  }
+  .rrn-input-row {
+    display: flex; gap: 10px;
+  }
+  .rrn-input {
+    flex: 1; padding: 12px 16px;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px;
+    background: var(--paper); color: var(--ink);
+    transition: border-color .2s;
+  }
+  .rrn-input:focus { outline: none; border-color: var(--accent); }
+  .rrn-btn {
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 10px;
+    padding: 12px 20px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: background .2s;
+  }
+  .rrn-btn:hover { background: #1d4ed8; }
+  .status-result {
+    margin-top: 16px; padding: 16px;
+    background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 10px; display: flex; align-items: center; gap: 12px;
+  }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .status-info { flex: 1; }
+  .status-label { font-size: 12px; color: var(--muted); }
+  .status-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--green); }
+  .status-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* mini stats row */
+  .mini-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .mini-stat {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+    text-align: center;
+  }
+  .mini-stat-val {
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+  }
+  .mini-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ── FEATURES ── */
+  .section { padding: 100px 48px; }
+  .section-tag {
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 3vw, 48px);
+    font-weight: 800; letter-spacing: -1.5px;
+    max-width: 560px; line-height: 1.1;
+  }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 24px; margin-top: 56px;
+  }
+  .feature-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 32px;
+    transition: transform .3s, box-shadow .3s;
+    position: relative; overflow: hidden;
+  }
+  .feature-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: var(--accent); transform: scaleX(0);
+    transform-origin: left; transition: transform .3s;
+  }
+  .feature-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.08); }
+  .feature-card:hover::before { transform: scaleX(1); }
+  .feature-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: rgba(37,99,255,0.08); display: flex;
+    align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 20px;
+  }
+  .feature-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700; margin-bottom: 10px;
+  }
+  .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+  /* ── HOW IT WORKS ── */
+  .how-section { background: var(--ink); color: var(--paper); padding: 100px 48px; }
+  .how-section .section-tag { color: rgba(37,99,255,0.8); }
+  .how-section .section-title { color: var(--paper); }
+  .steps-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; margin-top: 56px; }
+  .step {
+    position: relative; text-align: center; padding: 32px 20px;
+  }
+  .step-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 64px; font-weight: 800;
+    color: rgba(255,255,255,0.06); line-height: 1;
+    margin-bottom: 16px;
+  }
+  .step-icon { font-size: 32px; margin-bottom: 16px; }
+  .step-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .step-desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.6; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--ink); color: rgba(255,255,255,0.4);
+    padding: 40px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; color: #fff; font-size: 18px; }
+  .footer-logo span { color: var(--accent); }
+
+  /* ── CHATBOT ── */
+  .chatbot-fab {
+    position: fixed; bottom: 28px; right: 28px; z-index: 999;
+    width: 58px; height: 58px; border-radius: 50%;
+    background: var(--accent); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: #fff;
+    box-shadow: 0 8px 28px rgba(37,99,255,0.4);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .chatbot-fab:hover { transform: scale(1.1); box-shadow: 0 12px 36px rgba(37,99,255,0.5); }
+
+  .chatbot-window {
+    position: fixed; bottom: 100px; right: 28px; z-index: 998;
+    width: 360px; height: 520px;
+    background: #fff; border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.15);
+    display: flex; flex-direction: column; overflow: hidden;
+    border: 1px solid var(--border);
+    transform: scale(0.8) translateY(20px); opacity: 0;
+    transform-origin: bottom right;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+    pointer-events: none;
+  }
+  .chatbot-window.open {
+    transform: scale(1) translateY(0); opacity: 1; pointer-events: all;
+  }
+  .chat-header {
+    background: var(--ink); color: #fff;
+    padding: 18px 20px; display: flex; align-items: center; gap: 12px;
+  }
+  .chat-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); display: flex; align-items: center;
+    justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+  .chat-header-info { flex: 1; }
+  .chat-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+  .chat-status { font-size: 11px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 5px; }
+  .chat-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .chat-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 18px; cursor: pointer; }
+
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 12px;
+    background: #fafaf9;
+  }
+  .msg { max-width: 80%; }
+  .msg.bot { align-self: flex-start; }
+  .msg.user { align-self: flex-end; }
+  .msg-bubble {
+    padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.5;
+  }
+  .msg.bot .msg-bubble {
+    background: #fff; border: 1px solid var(--border); border-bottom-left-radius: 4px;
+    color: var(--ink);
+  }
+  .msg.user .msg-bubble {
+    background: var(--accent); color: #fff; border-bottom-right-radius: 4px;
+  }
+  .msg-time { font-size: 10px; color: var(--muted); margin-top: 4px; padding: 0 4px; }
+  .msg.user .msg-time { text-align: right; }
+
+  .chat-input-row {
+    padding: 14px 16px; background: #fff; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; align-items: center;
+  }
+  .chat-input {
+    flex: 1; border: 1.5px solid var(--border); border-radius: 100px;
+    padding: 10px 16px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    background: var(--paper); color: var(--ink);
+    transition: border-color .2s;
+  }
+  .chat-input:focus { outline: none; border-color: var(--accent); }
+  .chat-send {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--accent); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    font-size: 16px; flex-shrink: 0; transition: background .2s;
+  }
+  .chat-send:hover { background: #1d4ed8; }
+
+  .typing { display: flex; gap: 4px; align-items: center; padding: 6px 0; }
+  .typing span {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--muted);
+    animation: typingDot 1.4s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingDot {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* ── MODAL BASE ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(10,15,30,0.6); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .3s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card); border-radius: 24px;
+    width: 420px; max-width: 95vw;
+    padding: 40px; position: relative;
+    transform: translateY(20px); transition: transform .3s;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.2);
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-close {
+    position: absolute; top: 20px; right: 20px;
+    background: var(--paper); border: none; border-radius: 50%;
+    width: 32px; height: 32px; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; color: var(--muted);
+  }
+  .modal h2 {
+    font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800;
+    letter-spacing: -1px; margin-bottom: 6px;
+  }
+  .modal-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .form-input {
+    width: 100%; padding: 13px 16px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px;
+    background: var(--paper); color: var(--ink); transition: border-color .2s;
+  }
+  .form-input:focus { outline: none; border-color: var(--accent); }
+  .form-submit {
+    width: 100%; padding: 14px;
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; font-family: 'DM Sans', sans-serif;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    margin-top: 8px; transition: background .2s;
+  }
+  .form-submit:hover { background: #1d4ed8; }
+
+  .tabs { display: flex; gap: 4px; background: var(--paper); border-radius: 10px; padding: 4px; margin-bottom: 28px; }
+  .tab {
+    flex: 1; padding: 10px; border: none; background: transparent;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; border-radius: 8px; transition: background .2s, color .2s;
+    color: var(--muted);
+  }
+  .tab.active { background: var(--card); color: var(--ink); font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+  .otp-row { display: flex; gap: 8px; justify-content: space-between; }
+  .otp-input {
+    width: 52px; height: 56px; text-align: center;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700;
+    background: var(--paper); color: var(--ink); transition: border-color .2s;
+  }
+  .otp-input:focus { outline: none; border-color: var(--accent); }
+
+  .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--muted); font-size: 12px; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .social-btn {
+    width: 100%; padding: 13px; border: 1.5px solid var(--border);
+    border-radius: 10px; background: transparent; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: border-color .2s, background .2s;
+  }
+  .social-btn:hover { border-color: var(--ink); background: var(--paper); }
+
+  .step-hidden { display: none; }
+
+  .otp-hint { font-size: 12px; color: var(--muted); text-align: center; margin-top: 12px; }
+  .otp-hint a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .success-box {
+    text-align: center; padding: 20px 0;
+  }
+  .success-icon { font-size: 56px; margin-bottom: 16px; }
+  .success-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .success-msg { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .hero { grid-template-columns: 1fr; padding: 100px 24px 60px; }
+    .hero-visual { order: -1; }
+    .features-grid { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: repeat(2,1fr); }
+    .section { padding: 60px 24px; }
+    .how-section { padding: 60px 24px; }
+    footer { flex-direction: column; gap: 12px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav>
+  <div class="nav-logo">RRN<span>.</span>check</div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="#" class="nav-cta" onclick="openModal()">Login / Register</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-badge">🔍 Real-time Payment Verification</div>
+    <h1>
+      Track your <em>RRN</em><br>
+      payment<br>
+      <span class="strike">instantly</span>
+    </h1>
+    <p class="hero-sub">
+      Enter your Reference Receipt Number to instantly check your payment status — whether it's processed, pending, or failed. Fast, secure, and always up to date.
+    </p>
+    <div class="hero-actions">
+      <a href="#check" class="btn-primary">⚡ Check Payment Status</a>
+      <a href="dashboard.html" class="btn-outline">View Dashboard →</a>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="demo-card" id="check">
+      <div class="demo-card-title">📋 Quick RRN Lookup</div>
+      <div class="rrn-input-row">
+        <input class="rrn-input" id="heroRrnInput" placeholder="Enter RRN (e.g. 942384710023)" maxlength="20"/>
+        <button class="rrn-btn" onclick="checkRrnDemo()">Check</button>
+      </div>
+      <div class="status-result" id="heroResult" style="display:none">
+        <div class="status-dot" id="heroDot"></div>
+        <div class="status-info">
+          <div class="status-label">Payment Status</div>
+          <div class="status-val" id="heroStatus">—</div>
+          <div class="status-meta" id="heroMeta"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <div class="mini-stat-val" style="color:var(--green)">98.4%</div>
+        <div class="mini-stat-label">Success Rate</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-val">2.1M+</div>
+        <div class="mini-stat-label">Payments Checked</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-val" style="color:var(--accent)">< 1s</div>
+        <div class="mini-stat-label">Response Time</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section class="section" id="features">
+  <div class="section-tag">⚙️ Features</div>
+  <div class="section-title">Everything you need to track payments</div>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Real-time Status</div>
+      <div class="feature-desc">Instantly fetch the latest payment status for any RRN. No delays, no caching — always live data.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔐</div>
+      <div class="feature-title">OTP Authentication</div>
+      <div class="feature-desc">Secure login with one-time passwords sent directly to your email. Your account is always protected.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <div class="feature-title">AI Chatbot Support</div>
+      <div class="feature-desc">Ask questions anytime. Our AI assistant answers queries about payments, statuses, and procedures 24/7.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Payment Dashboard</div>
+      <div class="feature-desc">View all your past checks, filter by status, and export reports — all from a clean, intuitive dashboard.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📧</div>
+      <div class="feature-title">Email Notifications</div>
+      <div class="feature-desc">Subscribe to alerts for specific RRNs. Get notified the moment a payment status changes.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏛️</div>
+      <div class="feature-title">Govt. Scheme Support</div>
+      <div class="feature-desc">Supports RRNs from PMGSY, MGNREGS, and other government disbursement schemes.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="how-section" id="how">
+  <div class="section-tag">📖 Process</div>
+  <div class="section-title">How it works</div>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-icon">✍️</div>
+      <div class="step-title">Enter RRN</div>
+      <div class="step-desc">Type in the Reference Receipt Number from your payment slip or confirmation letter.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-icon">🔍</div>
+      <div class="step-title">System Checks</div>
+      <div class="step-desc">Our backend queries the payment database in real-time to fetch the latest status.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-icon">📋</div>
+      <div class="step-title">View Result</div>
+      <div class="step-desc">See the full payment details — amount, date, payee, bank, and current status instantly.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-icon">📥</div>
+      <div class="step-title">Save & Track</div>
+      <div class="step-desc">Save results to your dashboard, set alerts, and download PDFs for record-keeping.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-logo">RRN<span>.</span>check</div>
+  <div>© 2025 RRN Checker. Built for transparency in payments.</div>
+  <div>Made with ❤️ for India</div>
+</footer>
+
+<!-- ── CHATBOT ── -->
+<button class="chatbot-fab" onclick="toggleChat()">💬</button>
+<div class="chatbot-window" id="chatWindow">
+  <div class="chat-header">
+    <div class="chat-avatar">🤖</div>
+    <div class="chat-header-info">
+      <div class="chat-name">RRN Assistant</div>
+      <div class="chat-status">Online · AI Powered</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="msg bot">
+      <div class="msg-bubble">👋 Hi! I'm the RRN Assistant. I can help you with payment status queries, RRN format, scheme info, and more. What would you like to know?</div>
+      <div class="msg-time">Just now</div>
+    </div>
+    <div class="msg bot">
+      <div class="msg-bubble">Try asking: <strong>"What is RRN?"</strong>, <strong>"How long does payment take?"</strong>, or <strong>"What if my payment failed?"</strong></div>
+    </div>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chatInput" placeholder="Ask a question..." onkeydown="handleChatKey(event)"/>
+    <button class="chat-send" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<!-- ── AUTH MODAL ── -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <!-- STEP 1: Tabs -->
+    <div id="authStep1">
+      <h2>Welcome back</h2>
+      <p class="modal-sub">Sign in or create your account to get started.</p>
+      <div class="tabs">
+        <button class="tab active" id="tabLogin" onclick="switchTab('login')">Login</button>
+        <button class="tab" id="tabRegister" onclick="switchTab('register')">Register</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-input" type="email" id="loginEmail" placeholder="you@example.com"/>
+        </div>
+        <button class="form-submit" onclick="sendOtp()">Send OTP to Email →</button>
+        <div class="divider">or</div>
+        <button class="social-btn" onclick="mockGoogleLogin()">
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" height="18" alt="G"/>
+          Continue with Google
+        </button>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="registerForm" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input class="form-input" type="text" placeholder="Your full name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-input" type="email" id="registerEmail" placeholder="you@example.com"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mobile Number</label>
+          <input class="form-input" type="tel" placeholder="+91 98765 43210"/>
+        </div>
+        <button class="form-submit" onclick="sendOtp('register')">Create Account & Send OTP →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: OTP -->
+    <div id="authStep2" class="step-hidden">
+      <h2>Check your inbox</h2>
+      <p class="modal-sub" id="otpSubText">We sent a 6-digit OTP to your email address.</p>
+      <div class="form-group">
+        <label class="form-label">Enter OTP</label>
+        <div class="otp-row">
+          <input class="otp-input" maxlength="1" oninput="otpNext(this,0)" id="otp0"/>
+          <input class="otp-input" maxlength="1" oninput="otpNext(this,1)" id="otp1"/>
+          <input class="otp-input" maxlength="1" oninput="otpNext(this,2)" id="otp2"/>
+          <input class="otp-input" maxlength="1" oninput="otpNext(this,3)" id="otp3"/>
+          <input class="otp-input" maxlength="1" oninput="otpNext(this,4)" id="otp4"/>
+          <input class="otp-input" maxlength="1" oninput="otpNext(this,5)" id="otp5"/>
+        </div>
+        <div class="otp-hint">Didn't receive it? <a onclick="resendOtp()">Resend OTP</a></div>
+      </div>
+      <button class="form-submit" onclick="verifyOtp()">Verify & Login →</button>
+    </div>
+
+    <!-- STEP 3: Success -->
+    <div id="authStep3" class="step-hidden">
+      <div class="success-box">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">You're logged in!</div>
+        <div class="success-msg">Welcome to RRN Checker. Redirecting you to the dashboard...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── DEMO RRN CHECK ──
+  const mockData = {
+    "942384710023": { status: "Success", color: "var(--green)", meta: "₹12,500 · MGNREGS · 23 Jan 2025" },
+    "847261930011": { status: "Pending", color: "var(--yellow)", meta: "₹8,200 · PMGSY · Processing..." },
+    "112938475562": { status: "Failed", color: "var(--red)", meta: "₹5,000 · PMJDY · Retry required" },
+  };
+
+  function checkRrnDemo() {
+    const val = document.getElementById('heroRrnInput').value.trim();
+    const resultEl = document.getElementById('heroResult');
+    const dot = document.getElementById('heroDot');
+    const statusEl = document.getElementById('heroStatus');
+    const metaEl = document.getElementById('heroMeta');
+    resultEl.style.display = 'flex';
+    if (mockData[val]) {
+      const d = mockData[val];
+      dot.style.background = d.color;
+      statusEl.style.color = d.color;
+      statusEl.textContent = d.status;
+      metaEl.textContent = d.meta;
+      resultEl.style.background = d.color.replace(')', ',0.08)').replace('var(', 'rgba(').replace('--green','16,185,129').replace('--yellow','245,158,11').replace('--red','239,68,68');
+    } else if (val.length >= 10) {
+      dot.style.background = 'var(--muted)';
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = 'Not Found';
+      metaEl.textContent = 'No record found for this RRN';
+    } else {
+      statusEl.textContent = 'Enter a valid RRN';
+      metaEl.textContent = '';
+    }
+  }
+
+  // ── MODAL ──
+  function openModal() { document.getElementById('authModal').classList.add('open'); }
+  function closeModal() { document.getElementById('authModal').classList.remove('open'); }
+  document.getElementById('authModal').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+
+  // ── TABS ──
+  function switchTab(tab) {
+    document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+    document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+    document.getElementById('loginForm').style.display = tab==='login' ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = tab==='register' ? 'block' : 'none';
+  }
+
+  // ── OTP FLOW ──
+  let currentOtp = '';
+  function sendOtp(mode) {
+    const emailEl = mode === 'register' ? document.getElementById('registerEmail') : document.getElementById('loginEmail');
+    const email = emailEl ? emailEl.value.trim() : '';
+    if (!email || !email.includes('@')) { alert('Please enter a valid email address'); return; }
+    // Simulate sending OTP
+    currentOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log('🔐 OTP (demo):', currentOtp); // In real app, this is sent via email API
+    document.getElementById('otpSubText').textContent = `We sent a 6-digit OTP to ${email}. (Demo OTP logged in console)`;
+    document.getElementById('authStep1').classList.add('step-hidden');
+    document.getElementById('authStep2').classList.remove('step-hidden');
+    document.getElementById('otp0').focus();
+  }
+
+  function otpNext(el, index) {
+    if (el.value.length === 1 && index < 5) {
+      document.getElementById('otp' + (index + 1)).focus();
+    }
+  }
+
+  function verifyOtp() {
+    const entered = [0,1,2,3,4,5].map(i => document.getElementById('otp'+i).value).join('');
+    if (entered === currentOtp || entered === '123456') {
+      document.getElementById('authStep2').classList.add('step-hidden');
+      document.getElementById('authStep3').classList.remove('step-hidden');
+      setTimeout(() => { closeModal(); window.location.href='dashboard.html'; }, 2000);
+    } else {
+      alert('❌ Incorrect OTP. Please try again. (Demo: use 123456 or check console)');
+    }
+  }
+
+  function resendOtp() {
+    currentOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log('🔁 New OTP (demo):', currentOtp);
+    alert('OTP resent! Check console for demo OTP.');
+  }
+
+  function mockGoogleLogin() {
+    alert('Google OAuth would redirect here. Integrate with your OAuth provider.');
+  }
+
+  // ── CHATBOT ──
+  let chatOpen = false;
+  function toggleChat() {
+    chatOpen = !chatOpen;
+    document.getElementById('chatWindow').classList.toggle('open', chatOpen);
+    if (chatOpen) document.getElementById('chatInput').focus();
+  }
+
+  function handleChatKey(e) { if(e.key === 'Enter') sendChat(); }
+
+  const botResponses = {
+    'rrn': 'RRN stands for Reference Receipt Number. It\'s a unique identifier assigned to each payment transaction in government disbursement systems.',
+    'payment': 'Payment processing usually takes 1-3 business days. If it\'s been longer, check the status here or contact your bank.',
+    'failed': 'If your payment failed, the amount is usually reversed within 5-7 working days. You can check updated status using the RRN on this portal.',
+    'pending': 'Pending status means your payment is in processing. It should update within 24-48 hours. Try checking again later.',
+    'status': 'You can check any payment status by entering the RRN (Reference Receipt Number) in the search box on the home page.',
+    'scheme': 'We support RRNs from MGNREGS, PMGSY, PMJDY, and other government disbursement schemes.',
+    'help': 'I can help with: 🔍 Payment status queries, 📋 RRN format questions, 🏦 Scheme information, and 🛠️ Troubleshooting failed payments.',
+    'contact': 'For further assistance, contact your district payment authority or bank branch with your RRN and transaction details.',
+  };
+
+  function addMsg(text, type) {
+    const container = document.getElementById('chatMessages');
+    const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    const div = document.createElement('div');
+    div.className = `msg ${type}`;
+    div.innerHTML = `<div class="msg-bubble">${text}</div><div class="msg-time">${now}</div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function addTyping() {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'msg bot'; div.id = 'typingIndicator';
+    div.innerHTML = `<div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('typingIndicator');
+    if (t) t.remove();
+  }
+
+  function sendChat() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    addMsg(text, 'user');
+    input.value = '';
+    addTyping();
+
+    // Simulate AI response
+    setTimeout(() => {
+      removeTyping();
+      const lower = text.toLowerCase();
+      let response = '🤔 I\'m not sure about that. Try asking about RRN, payment status, failed payments, or supported schemes. Or visit our FAQ page.';
+      for (const [key, val] of Object.entries(botResponses)) {
+        if (lower.includes(key)) { response = val; break; }
+      }
+      addMsg(response, 'bot');
+    }, 1000 + Math.random() * 800);
+  }
+</script>
+</body>
+</html>
